@@ -137,7 +137,7 @@ WP_DOCTOR () {
                 touch $FLAG_FILE
     fi
 
-    cd $HOMEDIR && wp doctor check core-verify-checksums autoload-options-size cron-duplicates cron-count plugin-deactivated cache-flush php-in-upload --skip-plugins --spotlight
+    cd $HOMEDIR && wp doctor check core-verify-checksums autoload-options-size cron-duplicates cron-count plugin-deactivated cache-flush php-in-upload --skip-plugins --skip-themes --spotlight
     BREAK_LINE
 
 }
