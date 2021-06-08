@@ -29,20 +29,12 @@ GPCOLOR="\e[92m ------ PERFECT \e[0m"
 WCOLOR="\e[93m ------ WARNING \e[0m"
 CCOLOR="\e[91m ------ CRITICAL \e[0m"
 EndCOLOR="\e[0m"
-UYel='\e[4;33m';
 BIGre='\e[1;92m';
 BIRed='\e[1;91m';
 BBlu='\e[1;34m';
-BPur='\e[1;35m';
 BCya='\e[1;36m';
-BWhi='\e[1;37m';
 red=$'\e[1;31m'
-grn=$'\e[1;32m'
 yel=$'\e[1;33m'
-blu=$'\e[1;34m'
-mag=$'\e[1;35m'
-cyn=$'\e[1;36m'
-end=$'\e[0m'
 
 
 file_domain=file-DOMAINNAME
@@ -51,8 +43,8 @@ URL_DOMAIN=$(curl -Ls -k -o /dev/null -w %{url_effective} $RAW_DOMAINNAME)
 #DOMAINNAME=http://minhalas.com
 DOMAINNAME=$(echo "$RAW_DOMAINNAME" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
 TTFB_APP_RAWDOMAINNAME=$RAW_DOMAINNAME/cw_phpinfo.php
-echo -e "\n"
-echo -e "\n"
+#echo -e "\n"
+#echo -e "\n"
 
 
 
@@ -69,8 +61,8 @@ if [[ ! $APP_TYPE =~ ^(wordpress|woocommerce|wordpressmu)$ ]]; then
   exit 1;
 fi
 HOMEDIR=$HOME/applications/$APP_NAME/public_html/
-echo $APP_TYPE
-echo $APP_NAME
+#echo $APP_TYPE
+#echo $APP_NAME
 
 ##############################################################--STARTING FUNCTIONS Declaration--##################################################################################################
 
@@ -123,6 +115,57 @@ TTFB_APP () {
      echo -e "\nTTFB OF APPLICATION :\n"
      paste  <(echo "$COLC3") -d' '|column -t
 
+
+
+}
+
+APP_STATS () {
+
+    for OUTPUT in $(ls -la /home/master/applications/ | awk '{if(NR>3)print}' | awk '{print $NF}')
+    do
+    ###### SETUP ############
+    LOG_FOLDER=/home/master/applications/$OUTPUT/logs
+    ACCESS_LOG=$LOG_FOLDER/apache_*.access.log
+    HOW_MANY_ROWS=20000
+    ######### FUNCTIONS ##############
+    function appname() {
+        echo -e "
+##################################
+    "$BIGre $OUTPUT $EndCOLOR"
+##################################
+    "
+    }
+    function title() {
+        echo "
+---------------------------------
+    $*
+---------------------------------
+    "
+    }
+    function urls_by_ip() {
+        local IP=$1
+        tail -5000 $ACCESS_LOG | awk -v ip=$IP ' $1 ~ ip {freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -5
+    }
+    function ip_addresses_by_user_agent(){
+        local USERAGENT_STRING="$1"
+        local TOP_20_IPS="`tail  -$HOW_MANY_ROWS $ACCESS_LOG | grep "${USERAGENT_STRING}"  | awk '{freq[$1]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -5`"
+        echo "$TOP_20_IPS"
+    }
+    ####### RUN REPORTS #############
+    appname
+    title "top 5 URLs"
+    TOP_20_URLS="`tail -$HOW_MANY_ROWS $ACCESS_LOG | awk '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -5`"
+    echo "$TOP_20_URLS"
+    title "top 5 URLS excluding POST data"
+    TOP_20_URLS_WITHOUT_POST="`tail  -$HOW_MANY_ROWS $ACCESS_LOG | awk -F"[ ?]" '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -5`"
+    echo "$TOP_20_URLS_WITHOUT_POST"
+    title "top 5 IPs"
+    TOP_20_IPS="`tail  -$HOW_MANY_ROWS $ACCESS_LOG | awk '{freq[$1]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -5`"
+    echo "$TOP_20_IPS"
+    title "top 5 user agents"
+    TOP_20_USER_AGENTS="`tail  -$HOW_MANY_ROWS $ACCESS_LOG | cut -d\  -f12- | sort | uniq -c | sort -rn | head -5`"
+    echo "$TOP_20_USER_AGENTS"
+    done
 
 
 }
@@ -418,6 +461,7 @@ CPU_USAGE () {
 WP_DOCTOR () {
 
     BREAK_LINE
+    SALT_HANDELING_DEL
 
     if  [[ ! -f "$FLAG_FILE" ]]; then
                 echo "Installing Wp-DOCTOR"
@@ -427,6 +471,7 @@ WP_DOCTOR () {
     
     cd $HOMEDIR && BREAK_LINE && wp doctor check  autoload-options-size cron-duplicates cron-count plugin-deactivated --skip-plugins --skip-themes --spotlight 
     BREAK_LINE
+    SALT_HANDELING_ADD
 
 }
 
@@ -447,6 +492,7 @@ DB_OPTIMIZATION () {
             if [ $? = "1" ]; then
 
                 STAR_BREAK_SHORT
+                SALT_HANDELING_DEL
                 cd $HOMEDIR
 
                 wp plugin deactivate wp-sweep  --quiet
@@ -466,6 +512,65 @@ DB_OPTIMIZATION () {
                 BREAK_LINE
             fi
 
+            echo $S
+echo $D
+echo $DATE
+echo "Custom-Count Before cleaning"
+echo $D
+
+wp db query "Select count(*) from ${dbprefix}actionscheduler_actions"
+wp db query "Select count(*) from ${dbprefix}options"
+wp db query "Select count(*) from ${dbprefix}toret_fio_log"
+wp db query "Select count(*) from ${dbprefix}actionscheduler_logs"
+
+
+wp db query "DELETE FROM ${dbprefix}actionscheduler_actions WHERE status='failed'"
+wp db query "DELETE FROM ${dbprefix}actionscheduler_actions WHERE status='complete'"
+wp db query "DELETE FROM ${dbprefix}actionscheduler_actions WHERE status='canceled'"
+wp db query "DELETE FROM ${dbprefix}options WHERE option_name LIKE 'fio_%'"
+wp db query "DELETE FROM ${dbprefix}toret_fio_log WHERE datetime < DATE_SUB(NOW(), INTERVAL 12 HOUR)"
+wp db query "DELETE FROM ${dbprefix}actionscheduler_logs WHERE log_date_gmt < DATE_SUB(NOW(), INTERVAL 12 HOUR)"
+
+echo ""
+echo $D
+echo $DATE
+echo "Custom-Count After cleaning"
+echo $D
+
+wp db query "Select count(*) from ${dbprefix}actionscheduler_actions"
+wp db query "Select count(*) from ${dbprefix}options"
+wp db query "Select count(*) from ${dbprefix}toret_fio_log"
+wp db query "Select count(*) from ${dbprefix}actionscheduler_logs"
+
+            SALT_HANDELING_ADD
+
+
+
+
+}
+
+SALT_HANDELING_DEL () {
+
+    cd $HOME/applications/$APP_NAME/public_html
+
+    if grep -q "wp-salt.php" "$HOME"/applications/"$APP_NAME"/public_html/wp-config.php; then
+    
+        sed -i "/wp-salt.php/d' " "$HOME"/applications/"$APP_NAME"/public_html/wp-config.php
+
+fi
+
+
+}
+
+SALT_HANDELING_ADD () {
+
+    cd $HOME/applications/$APP_NAME/public_html
+
+    if ! grep -q "wp-salt.php" $HOME/applications/$APP_NAME/public_html/wp-config.php; then
+    
+        sed -i "/table_prefix/a require('wp-salt.php');" $HOME/applications/$APP_NAME/public_html/wp-config.php
+
+    fi
 
 }
 
@@ -549,8 +654,10 @@ CRON_COUNT () {
 
             cd $HOMEDIR
             dbprefix=$(cat wp-config.php | grep "\$table_prefix" | cut -d \' -f 2)
+            SALT_HANDELING_DEL
             wp db query "UPDATE ${dbprefix}options SET option_value = '' WHERE option_name = 'cron'"
             echo "Cron Count has been reduced"
+            SALT_HANDELING_ADD
             BREAK_LINE
 }
 
@@ -562,7 +669,9 @@ AUTOLOAD () {
         fi
 
   cd $HOME/applications/$APP_NAME/public_html/
+
   dbprefix=$(cat wp-config.php | grep "\$table_prefix" | cut -d \' -f 2)
+  SALT_HANDELING_DEL
 
   wp db query "SELECT option_name, length(option_value) AS option_value_length FROM ${dbprefix}options WHERE autoload='yes' ORDER BY option_value_length DESC LIMIT 10" --skip-column-names --skip-plugins --skip-themes --quiet > /home/master/autoloaded_data
 
@@ -584,6 +693,7 @@ AUTOLOAD () {
    fi
 
 done
+    SALT_HANDELING_ADD
 }
 
 
@@ -596,6 +706,7 @@ DB_ENGINE () {
         fi
 
     cd $HOME/applications/$APP_NAME/public_html/
+    SALT_HANDELING_DEL
   # create array of MyISAM tables
     WPTABLES=($(wp db query "SHOW TABLE STATUS WHERE Engine = 'MyISAM'" --allow-root --silent --skip-column-names | awk '{ print $1}'))
 
@@ -606,6 +717,7 @@ do
     wp db query "ALTER TABLE ${WPTABLE} ENGINE=InnoDB" --allow-root
     echo "Converted ${WPTABLE} to InnoDB"
 done
+    SALT_HANDELING_ADD
 }
 
 
@@ -648,14 +760,15 @@ $(ColorYellow 'Choose an option:') "
 cpu_load_optimizations(){
 
 echo -ne "
-TTFB OPTIMIZATIONS
+CPU USAGE
 $(ColorGreen '1)') CHECK CPU USAGE
 $(ColorGreen '2)') DB OPTIMIZATIONS
 $(ColorGreen '3)') WP-DOCTOR
 $(ColorGreen '4)') CHECK CACHING
 $(ColorGreen '5)') REDUCE AUTOLOADED
 $(ColorGreen '6)') REDUCE CRON COUNT
-$(ColorPurp '7)') RETURN TO MAIN MENU
+$(ColorGreen '7)') CHECK APP STATS
+$(ColorPurp '8)') RETURN TO MAIN MENU
 $(ColorPurp '0)') Exit
 $(ColorYellow 'Choose an option:') "
         read a
@@ -666,7 +779,8 @@ $(ColorYellow 'Choose an option:') "
                 4) CACHE ; cpu_load_optimizations ;;
                 5) AUTOLOAD ; cpu_load_optimizations ;;
                 6) CRON_COUNT ; cpu_load_optimizations ;;
-                7) mainmenu ;;
+                7) APP_STATS ; cpu_load_optimizations ;;
+                8) mainmenu ;;
                 0) exit 0 ;;
                 *) echo -e $red"Wrong option."$clear; WrongCommand;;
         esac
@@ -675,7 +789,7 @@ $(ColorYellow 'Choose an option:') "
 wp_performance_optimizations(){
 
 echo -ne "
-TTFB OPTIMIZATIONS
+WP PERFORMANCE
 $(ColorGreen '1)') CHECK CPU USAGE
 $(ColorGreen '2)') DB OPTIMIZATIONS
 $(ColorGreen '3)') WP-DOCTOR
