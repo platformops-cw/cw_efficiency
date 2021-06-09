@@ -517,7 +517,7 @@ echo $D
 echo $DATE
 echo "Custom-Count Before cleaning"
 echo $D
-
+dbprefix=$(cat wp-config.php | grep "\$table_prefix" | cut -d \' -f 2)
 wp db query "Select count(*) from ${dbprefix}actionscheduler_actions"
 wp db query "Select count(*) from ${dbprefix}options"
 wp db query "Select count(*) from ${dbprefix}toret_fio_log"
