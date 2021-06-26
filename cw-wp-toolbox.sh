@@ -137,29 +137,29 @@ TTFB_APP () {
     TTFB_APP_VALUE=$(echo "scale=4; $TTFB_APP_VALUE*1000" | bc)
      echo -e "( 0-300ms = PERFECT,  301ms-600ms= WARNING,  601ms-so on = CRITICAL )"
      echo -e "$D-----------------"
-     COLC1=$(echo "$TTFB_APP_VALUE" | tr -d '%')
-     COLC2=$(echo "$COLC1" | printf "%.0f" "$COLC1")
+     COLC11=$(echo "$TTFB_APP_VALUE" | tr -d '%')
+     COLC22=$(echo "$COLC11" | printf "%.0f" "$COLC11")
 
-    for i in $(echo "$COLC2"); do
+    for i in $(echo "$COLC22"); do
         {
             if [[ $i = *[[:digit:]]* ]]; then
             {
             if [ $i -ge 601 ]; then
-            COLC3="$(echo -e APP_TTFB: $i"ms $CCOLOR\n$COLC3")"
+            COLC33="$(echo -e APP_TTFB: $i"ms $CCOLOR\n$COLC33")"
             elif [[ $i -ge 301 && $i -lt 600 ]]; then
-                COLC3="$(echo -e APP_TTFB: $i"ms $WCOLOR\n$COLC3")"
+                COLC33="$(echo -e APP_TTFB: $i"ms $WCOLOR\n$COLC33")"
             else
-                COLC3="$(echo -e APP_TTFB: $i"ms $GPCOLOR\n$COLC3")"
+                COLC33="$(echo -e APP_TTFB: $i"ms $GPCOLOR\n$COLC33")"
             fi
             }
             else
-                COLC3="$(echo -e $i"% (Free CPU Percentage details not available)\n$COLC3")"
+                COLC33="$(echo -e $i"% (Free CPU Percentage details not available)\n$COLC33")"
             fi
         }
     done
-     COLC3=$(echo "$COLC3"|sort -k1n)
+     COLC33=$(echo "$COLC33"|sort -k1n)
      echo -e "\nTTFB OF APPLICATION :\n"
-     paste  <(echo "$COLC3") -d' '|column -t
+     paste  <(echo "$COLC33") -d' '|column -t
 
 
 
