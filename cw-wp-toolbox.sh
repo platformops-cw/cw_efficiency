@@ -2,7 +2,7 @@
 
 #------AUTHOR: Ahmad Sami------#
 
-clear
+printf '\33[H\33[2J'
 
 #------variables used------#
 S="================================================"
@@ -67,11 +67,6 @@ HOMEDIR=$HOME/applications/$APP_NAME/public_html/
 #echo $APP_TYPE
 #echo $APP_NAME
 
-if  [[ ! -f "$SLACK_NOTI" ]]; then
-                object_wrong='{"attachments": [{"color": "#2eb886", "title": "CW-TOOLBOX used","text": "'"date: $DATE UTC\n"' '"server_ip: $SERVER_IP\n"' '"App_name: $APP_NAME"'" }], "icon_emoji": "thumbsup"}'
-                curl -X POST -H 'Content-type: application/json' --data "$object_wrong" https://hooks.slack.com/services/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
-                touch $SLACK_NOTI
-    fi
 
 if grep -q salt.php "$HOMEDIR/wp-config.php"; then
   touch $SALT_FILE
@@ -507,6 +502,7 @@ CPU_USAGE () {
 WP_DOCTOR () {
 
     BREAK_LINE
+    ERROR_REPORTING_ADD
     SALT_HANDELING_DEL
 
     if  [[ ! -f "$FLAG_FILE" ]]; then
@@ -518,6 +514,7 @@ WP_DOCTOR () {
     cd $HOMEDIR && BREAK_LINE && wp doctor check  autoload-options-size cron-duplicates cron-count plugin-deactivated --skip-plugins --skip-themes --spotlight
     BREAK_LINE
     SALT_HANDELING_ADD
+    ERROR_REPORTING_DEL
 
 }
 
@@ -552,7 +549,7 @@ DB_OPTIMIZATION () {
                 wp plugin uninstall wp-sweep  --quiet
                 wp plugin install wp-sweep  --quiet
                 wp plugin activate wp-sweep --quiet
-                wp sweep spam_comments deleted_comments unused_terms optimize_database duplicated_postmeta duplicated_commentmeta duplicated_usermeta  duplicated_termmeta transient_options orphan_postmeta orphan_commentmeta orphan_usermeta orphan_termmeta orphan_term_relationships
+                wp sweep spam_comments deleted_comments unused_terms  duplicated_postmeta duplicated_commentmeta duplicated_usermeta  duplicated_termmeta transient_options orphan_postmeta orphan_commentmeta orphan_usermeta orphan_termmeta orphan_term_relationships optimize_database
                 wp plugin deactivate wp-sweep --quiet
                 wp plugin uninstall wp-sweep --quiet
                 STAR_BREAK_SHORT
@@ -560,7 +557,7 @@ DB_OPTIMIZATION () {
             else
                 STAR_BREAK_SHORT
                 wp plugin activate wp-sweep --quiet
-                wp sweep spam_comments deleted_comments unused_terms optimize_database duplicated_postmeta duplicated_commentmeta duplicated_usermeta  duplicated_termmeta transient_options orphan_postmeta orphan_commentmeta orphan_usermeta orphan_termmeta orphan_term_relationships
+                wp sweep spam_comments deleted_comments unused_terms duplicated_postmeta duplicated_commentmeta duplicated_usermeta  duplicated_termmeta transient_options orphan_postmeta orphan_commentmeta orphan_usermeta orphan_termmeta orphan_term_relationships optimize_database
                 STAR_BREAK_SHORT
                 BREAK_LINE
             fi
@@ -691,6 +688,7 @@ CACHE_CONFIGURATION () {
 CRON_COUNT () {
 
             BREAK_LINE
+            ERROR_REPORTING_ADD
 
     read -p "Would you like to take DB DUMP? [yn]" answer
         if [[ $answer = y ]] ; then
@@ -704,6 +702,7 @@ CRON_COUNT () {
             echo "Cron Count has been reduced"
             SALT_HANDELING_ADD
             BREAK_LINE
+            ERROR_REPORTING_DEL
 }
 
 AUTOLOAD () {
@@ -712,7 +711,7 @@ AUTOLOAD () {
         if [[ $answer = y ]] ; then
                 MySQL_DUMP & displaySpinner
         fi
-
+  ERROR_REPORTING_ADD
   cd $HOME/applications/$APP_NAME/public_html/
 
   dbprefix=$(cat wp-config.php | grep "\$table_prefix" | cut -d \' -f 2)
@@ -739,6 +738,7 @@ AUTOLOAD () {
 
 done
     SALT_HANDELING_ADD
+    ERROR_REPORTING_DEL
 }
 
 
@@ -750,6 +750,8 @@ DB_ENGINE () {
                 MySQL_DUMP & displaySpinner
         fi
 
+
+    ERROR_REPORTING_ADD
     cd $HOME/applications/$APP_NAME/public_html/
     SALT_HANDELING_DEL
   # create array of MyISAM tables
@@ -763,9 +765,10 @@ do
     echo "Converted ${WPTABLE} to InnoDB"
 done
     SALT_HANDELING_ADD
+    ERROR_REPORTING_DEL
 }
 
-
+    
 
 MEMORY_LIMIT () {
 
