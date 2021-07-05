@@ -65,6 +65,8 @@ HOMEDIR=$HOME/applications/$APP_NAME/public_html/
 #echo $APP_TYPE
 #echo $APP_NAME
 
+CACHE=$(curl -sv -k $URL_DOMAIN   -H 'authority: $DOMAINNAME'   -H 'upgrade-insecure-requests: 1'   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'   -H 'sec-fetch-site: none'   -H 'sec-fetch-mode: navigate'   -H 'sec-fetch-dest: document'   -H 'accept-language: en-US,en;q=0.9'  --compressed 2>&1 > /dev/null | egrep -i '< (X-Cache|x-magento-cache-debug)' | cut -d':' -f2 | cut -f 2 -d ' ' | sed -e 's/\r//g')
+
 rm $SALT_FILE 2>&1 > /dev/null
 
 if grep -q salt.php "$HOMEDIR/wp-config.php"; then
@@ -212,7 +214,7 @@ APP_STATS () {
 
 CACHE() {
 
-    CACHE=$(curl -sv -k $URL_DOMAIN   -H 'authority: $DOMAINNAME'   -H 'upgrade-insecure-requests: 1'   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'   -H 'sec-fetch-site: none'   -H 'sec-fetch-mode: navigate'   -H 'sec-fetch-dest: document'   -H 'accept-language: en-US,en;q=0.9'  --compressed 2>&1 > /dev/null | egrep -i '< (X-Cache|x-magento-cache-debug)' | cut -d':' -f2 | cut -f 2 -d ' ' | sed -e 's/\r//g')
+    
 
 
 case $APP_TYPE in
